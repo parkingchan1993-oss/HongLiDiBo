@@ -1,0 +1,20 @@
+{
+ "name": "红利低波100",
+ "code": "930955",
+ "current": 10608.8662,
+ "change_pct": -1.39,
+ "change_20d": -8.05,
+ "change_ytd": -10.03,
+ "hist_high": 12539.61,
+ "hist_low": 10597.38,
+ "volume": 57296359,
+ "amount": 57198383100,
+ "lb": 0.85,
+ "hq_date": "20260626",
+ "hq_time": "151048",
+ "etf_code": "515100",
+ "etf_name": "红利低波100ETF景顺",
+ "etf_price": 0.0,
+ "etf_code2": "159307",
+ "etf_name2": "红利低波100ETF"
+}

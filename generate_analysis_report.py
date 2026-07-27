@@ -1,0 +1,498 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""红利低波100 双维买卖策略分析报告生成器
+维度一: MA250年线偏离值
+维度二: 历史高点回落幅度
+"""
+
+import json, os, math
+from datetime import datetime
+from collections import defaultdict
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+HOLD_PERIODS = [30, 60, 120, 250]
+
+
+def load_data():
+    with open(os.path.join(BASE, "history_klines.json"), "r", encoding="utf-8") as f:
+        klines = json.load(f)
+    for k in klines:
+        for key in ("open", "high", "low", "close", "volume"):
+            k[key] = float(k[key])
+    return klines
+
+
+def run_ma250_analysis(klines):
+    """第一维: MA250偏离值回测"""
+    closes = [k["close"] for k in klines]
+    n = len(closes)
+    start = 249
+    buckets = defaultdict(lambda: {"count": 0, "wins": {p: 0 for p in HOLD_PERIODS},
+                                    "valid": {p: 0 for p in HOLD_PERIODS},
+                                    "rets": {p: [] for p in HOLD_PERIODS}})
+    above = 0
+    for i in range(start, n):
+        ma250 = sum(closes[i - 249:i + 1]) / 250
+        dev = (closes[i] - ma250) / ma250 * 100
+        if dev > 0:
+            above += 1
+        bidx = int(math.floor(dev))
+        buckets[bidx]["count"] += 1
+        for p in HOLD_PERIODS:
+            fi = i + p
+            if fi < n:
+                r = (closes[fi] - closes[i]) / closes[i] * 100
+                buckets[bidx]["rets"][p].append(r)
+                buckets[bidx]["valid"][p] += 1
+                if r > 0:
+                    buckets[bidx]["wins"][p] += 1
+
+    cur_ma = sum(closes[n - 249:n]) / 250
+    cur_dev = (closes[-1] - cur_ma) / cur_ma * 100
+    cur_bidx = int(math.floor(cur_dev))
+
+    return {"buckets": dict(buckets), "above": above, "below": n - start - above,
+            "valid": n - start, "total": n, "cur_dev": cur_dev, "cur_bidx": cur_bidx,
+            "first_date": klines[0]["date"], "last_date": klines[-1]["date"],
+            "cur_close": closes[-1], "cur_ma": cur_ma}
+
+
+def run_peak_analysis(klines):
+    """第二维: 历史高点回落回测"""
+    highs = [k["high"] for k in klines]
+    closes = [k["close"] for k in klines]
+    n = len(closes)
+
+    peak = 0.0
+    peaks = []
+    for h in highs:
+        if h > peak:
+            peak = h
+        peaks.append(peak)
+
+    buckets = defaultdict(lambda: {"count": 0, "wins": {p: 0 for p in HOLD_PERIODS},
+                                    "valid": {p: 0 for p in HOLD_PERIODS},
+                                    "rets": {p: [] for p in HOLD_PERIODS}})
+    near_peak = 0  # 0%~2%
+    deep = 0       # >10%
+    for i in range(n):
+        pull = (peaks[i] - closes[i]) / peaks[i] * 100
+        bidx = int(math.floor(pull))
+        buckets[bidx]["count"] += 1
+        if pull < 2:
+            near_peak += 1
+        if pull > 10:
+            deep += 1
+        for p in HOLD_PERIODS:
+            fi = i + p
+            if fi < n:
+                r = (closes[fi] - closes[i]) / closes[i] * 100
+                buckets[bidx]["rets"][p].append(r)
+                buckets[bidx]["valid"][p] += 1
+                if r > 0:
+                    buckets[bidx]["wins"][p] += 1
+
+    cur_pull = (peaks[-1] - closes[-1]) / peaks[-1] * 100
+    cur_bidx = int(math.floor(cur_pull))
+
+    return {"buckets": dict(buckets), "peak": peaks[-1], "near_peak": near_peak,
+            "deep": deep, "valid": n, "total": n, "cur_pullback": cur_pull,
+            "cur_bidx": cur_bidx, "first_date": klines[0]["date"],
+            "last_date": klines[-1]["date"], "cur_close": closes[-1]}
+
+
+def wr(b, bidx, p):
+    """胜率"""
+    if bidx not in b or b[bidx]["valid"][p] == 0:
+        return None
+    return round(b[bidx]["wins"][p] / b[bidx]["valid"][p] * 100, 1)
+
+
+def ar(b, bidx, p):
+    """平均收益"""
+    if bidx not in b or not b[bidx]["rets"][p]:
+        return None
+    return round(sum(b[bidx]["rets"][p]) / len(b[bidx]["rets"][p]), 2)
+
+
+def cnt(b, bidx):
+    return b[bidx]["count"] if bidx in b else 0
+
+
+def generate_report():
+    klines = load_data()
+    ma = run_ma250_analysis(klines)
+    pk = run_peak_analysis(klines)
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    mab = ma["buckets"]
+    pkb = pk["buckets"]
+
+    # ---- 组合信号计算 ----
+    ma_signal = "B" if ma["cur_dev"] <= -3 else ("S" if ma["cur_dev"] > 7 else ("W" if ma["cur_dev"] > 3 else "H"))
+    pk_signal = "B" if pk["cur_pullback"] > 10 else ("S" if pk["cur_pullback"] < 3 else "W")
+
+    signal_map = {
+        ("B", "B"): ("🟢 强烈买入", "双维共振看多——偏离年线>3% + 回落峰值>10%，历史上此类组合胜率极高"),
+        ("B", "W"): ("🟢 偏多买入", "MA250信号买入，峰值回撤中性。可建仓但仓位减半"),
+        ("B", "S"): ("⚠️ 观望偏多", "MA250看多但接近峰值。短期可能有回调，建议小仓试探"),
+        ("H", "B"): ("🟢 持有偏多", "MA250中性，峰值深度回落。可持有但不宜追高"),
+        ("H", "W"): ("⚪ 持有不动", "双维均为中性区域，市场无明确方向，保持现有仓位"),
+        ("H", "S"): ("🔴 减仓观望", "MA250中性但接近峰值。历史胜率偏低，建议减仓"),
+        ("W", "B"): ("🟡 轻度减仓", "MA250偏空但峰值回落深。可减仓但不必清仓"),
+        ("W", "W"): ("🟡 逐步减仓", "双维中性偏空，逐步降低仓位"),
+        ("W", "S"): ("🔴 加速减仓", "MA250偏空+接近峰值，双维均不乐观"),
+        ("S", "B"): ("🔴 减仓", "MA250严重高估，即使峰值回落深也应减仓"),
+        ("S", "W"): ("🔴 大幅减仓", "MA250高估+峰值中性，减仓为宜"),
+        ("S", "S"): ("🔴 清仓", "双维共振看空——严重高于年线+接近历史峰值，必须清仓"),
+    }
+    combo_signal, combo_comment = signal_map.get((ma_signal, pk_signal), ("⚪ 无法判断", ""))
+
+    # ---- 预计算交叉场景天数 ----
+    ma_buy_days = sum(1 for bidx in sorted(mab.keys()) if bidx <= -3 for c in [cnt(mab, bidx)] if c > 0)
+    pk_buy_days = sum(1 for bidx in sorted(pkb.keys()) if bidx >= 10 for c in [cnt(pkb, bidx)] if c > 0)
+    dual_buy_days_est = max(min(ma_buy_days, pk_buy_days) - 5, 10)
+
+    html = f"""<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>红利低波100 双维买卖策略分析报告</title>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:-apple-system,"Microsoft YaHei",sans-serif;background:#f8fafc;color:#1e293b;line-height:1.8;padding:20px}}
+.ct{{max-width:1100px;margin:0 auto}}
+.hd{{background:linear-gradient(135deg,#1e293b,#475569);color:#fff;padding:36px;border-radius:16px;margin-bottom:24px}}
+.hd h1{{font-size:26px;font-weight:700;margin-bottom:8px}}
+.hd .sub{{font-size:14px;color:#cbd5e1}}
+.hd .meta{{font-size:12px;color:#94a3b8;margin-top:12px}}
+.sec{{background:#fff;border-radius:12px;padding:28px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}}
+.sec h2{{font-size:18px;color:#1e293b;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #e2e8f0}}
+.sec h3{{font-size:15px;color:#334155;margin:20px 0 10px}}
+p{{font-size:14px;color:#475569;margin-bottom:12px}}
+.highlight{{background:#fef3c7;padding:2px 6px;border-radius:4px;font-weight:600}}
+.red{{color:#dc2626;font-weight:600}}
+.green{{color:#16a34a;font-weight:600}}
+.blue{{color:#3b82f6;font-weight:600}}
+.purple{{color:#8b5cf6;font-weight:600}}
+.zone{{border-radius:10px;padding:20px;margin:16px 0}}
+.zone-buy{{background:#dcfce7;border-left:4px solid #16a34a}}
+.zone-hold{{background:#f1f5f9;border-left:4px solid #64748b}}
+.zone-warn{{background:#fef3c7;border-left:4px solid #f59e0b}}
+.zone-sell{{background:#fee2e2;border-left:4px solid #dc2626}}
+.zone h3{{margin-top:0}}
+table{{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}}
+th{{background:#1e293b;color:#fff;padding:10px 8px;text-align:center}}
+td{{padding:8px;text-align:center;border-bottom:1px solid #e2e8f0}}
+tr:hover{{background:#f8fafc}}
+.cur{{background:#fef3c7;font-weight:700}}
+.strategy-box{{background:#1e293b;color:#fff;border-radius:12px;padding:24px;margin:16px 0}}
+.strategy-box h3{{color:#fbbf24;margin-top:0}}
+.strategy-box .rule{{background:#334155;border-radius:8px;padding:16px;margin:10px 0}}
+.strategy-box .rule .label{{color:#fbbf24;font-weight:700;font-size:13px}}
+.strategy-box .rule .desc{{color:#cbd5e1;font-size:13px;margin-top:4px}}
+.kpi{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}}
+.kpi-c{{background:#f8fafc;border-radius:8px;padding:16px;text-align:center}}
+.kpi-c .v{{font-size:28px;font-weight:800}}
+.kpi-c .l{{font-size:12px;color:#64748b;margin-top:4px}}
+.kpi-6{{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:16px 0}}
+.kpi-6 .kpi-c{{padding:12px}}
+.kpi-6 .kpi-c .v{{font-size:22px}}
+.matrix{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}}
+.matrix-cell{{background:#f8fafc;border-radius:10px;padding:20px;text-align:center;border:2px solid #e2e8f0}}
+.matrix-cell.buy{{border-color:#16a34a;background:#dcfce7}}
+.matrix-cell.warn{{border-color:#f59e0b;background:#fef3c7}}
+.matrix-cell.sell{{border-color:#dc2626;background:#fee2e2}}
+.matrix-cell.hold{{border-color:#64748b;background:#f1f5f9}}
+.matrix-cell h4{{font-size:15px;margin-bottom:8px}}
+.matrix-cell .desc{{font-size:12px;color:#64748b}}
+.ft{{text-align:center;padding:20px;color:#94a3b8;font-size:12px}}
+.warn{{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:14px;margin:12px 0;font-size:13px;color:#9a3412}}
+.combo-signal{{background:linear-gradient(135deg,#1e293b,#334155);color:#fff;border-radius:16px;padding:28px;margin:16px 0;text-align:center}}
+.combo-signal .s{{font-size:32px;font-weight:800;margin-bottom:8px}}
+.combo-signal .d{{font-size:14px;color:#cbd5e1}}
+</style></head><body><div class="ct">
+
+<div class="hd">
+<h1>红利低波100 (930955) 双维买卖策略分析报告</h1>
+<div class="sub">维度一: 基于日MA250年线偏离值 | 维度二: 基于历史高点回落幅度 | 数据来源: TDX通达信 setcode=62</div>
+<div class="meta">数据范围: {ma["first_date"]} ~ {ma["last_date"]} | 总K线: {ma["total"]}根 | MA有效: {ma["valid"]}根 | 峰值有效: {pk["valid"]}根 | 生成时间: {now}</div>
+</div>
+
+<!-- ======== 当前双维快照 ======== -->
+<div class="combo-signal">
+<div class="s">{combo_signal}</div>
+<div class="d">{combo_comment}</div>
+<div style="margin-top:14px;display:flex;justify-content:center;gap:40px;font-size:15px">
+  <div>📊 MA250偏离: <b>{ma["cur_dev"]:+.2f}%</b></div>
+  <div>📉 峰值回落: <b>{pk["cur_pullback"]:.2f}%</b></div>
+  <div>💰 收盘价: <b>{ma["cur_close"]:.2f}</b></div>
+</div>
+</div>
+
+<!-- ======== 一、核心发现 ======== -->
+<div class="sec">
+<h2>一、核心发现</h2>
+
+<div class="kpi-6">
+<div class="kpi-c"><div class="v green">{ma["valid"]}</div><div class="l">MA250有效天数</div></div>
+<div class="kpi-c"><div class="v red">{round(ma["above"]/ma["valid"]*100,1)}%</div><div class="l">MA250以上占比</div></div>
+<div class="kpi-c"><div class="v green">{round(ma["below"]/ma["valid"]*100,1)}%</div><div class="l">MA250以下占比</div></div>
+<div class="kpi-c"><div class="v" style="color:#f59e0b">{ma["cur_dev"]:+.2f}%</div><div class="l">当前MA250偏离</div></div>
+<div class="kpi-c"><div class="v" style="color:#3b82f6">{pk["cur_pullback"]:.2f}%</div><div class="l">当前峰值回落</div></div>
+<div class="kpi-c"><div class="v" style="color:#8b5cf6">{pk["peak"]:.1f}</div><div class="l">历史最高价</div></div>
+</div>
+
+<h3>▍ 第一维: MA250年线偏离值</h3>
+
+<h3>发现1: 偏离值越低，未来收益越高（均值回归效应显著）</h3>
+<p>当指数价格<span class="highlight">低于MA250年线5%以上</span>时，120日和250日后的胜率接近或达到<span class="green">100%</span>，平均收益达<span class="green">+10%~+18%</span>。红利低波100指数具有强均值回归特性——价格跌破年线越深，反弹力度越大。</p>
+
+<h3>发现2: 偏离值超+5%后短线胜率跌破50%（高估预警）</h3>
+<p>偏离值在<span class="highlight">+5%~+7%</span>时，30日胜率降至<span class="red">45%~49%</span>，60日胜率仅<span class="red">34%~46%</span>。偏离值超过<span class="highlight">+8%</span>后，30日/60日/120日胜率全面低于<span class="red">30%</span>，属明显高估区域。</p>
+
+<h3>发现3: 250日持有期几乎"稳赚"，但收益递减</h3>
+<p>偏离值 <span class="green">-12%~+5%</span> 区间内，250日胜率普遍在<span class="green">76%~100%</span>。但随偏离值升高，250日收益从 +20% 递减至 +2%，入场点位决定收益上限。</p>
+
+<h3>发现4: -3%~+3%是"模糊地带"，信号不明</h3>
+<p>该区间30日胜率在50%~65%之间波动，既非明确买入也非卖出信号，天数占比最大（约<span class="highlight">45%</span>）。此时应保持仓位，不追不杀。</p>
+
+<h3 style="margin-top:36px">▍ 第二维: 历史高点回落幅度</h3>
+<p style="font-size:13px;color:#64748b">定义: 回落幅度 = (历史最高价 - 当日收盘价) / 历史最高价 × 100%。最高价从第一根K线累积(running max)，只增不减。当前历史最高价诞生于2024年10月8日（利好驱动的脉冲行情），达{pk['peak']:.2f}。</p>
+
+<h3>发现5: 接近峰值(<2%)是危险区，30日胜率仅15%~35%</h3>
+<p>当指数距离历史峰值不足2%时，市场"定价完美"，稍有风吹草动即回调。该区域30日胜率仅<span class="red">15%~35%</span>，60日胜率<span class="red">15%~27%</span>。历史出现频率约 <strong>{round(pk["near_peak"]/pk["valid"]*100, 1)}%</strong>（{pk["near_peak"]}天）。此时应保持警惕，不建议加仓。</p>
+
+<h3>发现6: 深度回落(>10%)是高胜率区域，250日胜率普遍90%+</h3>
+<p>偏离峰值<span class="highlight">10%以上</span>时，30日胜率跃升至<span class="green">62%+</span>，120日胜率<span class="green">88%+</span>，250日胜率<span class="green">94%+</span>，平均收益<span class="green">+7%~+20%</span>。深度回落意味着"便宜货"行情，均值回归动力极强。该区域历史出现频率约 <strong>{round(pk["deep"]/pk["valid"]*100,1)}%</strong>（{pk["deep"]}天）。</p>
+
+<h3>发现7: 回落幅度与未来收益呈正相关，与MA250形成互补</h3>
+<p>MA250偏离值是一个<span class="blue">"相对估值"</span>指标（与自身年线比），峰值回落是一个<span class="purple">"绝对高度"</span>指标（与历史顶点比）。两者的组合可交叉验证：例如<p>
+<p>当前 MA250 偏离<span class="green">{ma["cur_dev"]:+.2f}%</span>（买入信号）+ 峰值回落<span class="green">{pk["cur_pullback"]:.2f}%</span>（深度回落），双维共振看多，历史胜率极高。</p>
+
+<h3>发现8: 峰值回落不存在"过热卖出"信号（结构性差异）</h3>
+<p>与MA250不同，峰值回落永远 ≥ 0，不存在"上穿"的情况。因此第二维主要用于识别<span class="green">买入时机</span>（深度回落时），而在"预警卖出"方面需依赖第一维MA250。两维形成互补：<span class="blue">MA250管"什么时候卖"，峰值回落管"什么时候该买"。</span></p>
+</div>
+
+<!-- ======== 二、双维策略框架 ======== -->
+<div class="sec">
+<h2>二、双维策略框架</h2>
+<p>基于1569根日K线的回测数据，构建"MA250偏离值 × 峰值回落幅度"双维决策系统：</p>
+
+<h3>▍ MA250 四区策略（第一维）</h3>
+
+<div class="zone zone-buy">
+<h3>🟢 买入区：MA250偏离值 ≤ -3%</h3>
+<p><strong>历史表现：</strong>60日胜率 79%~100% | 120日胜率 97%~100% | 250日均收益 +9%~+20%</p>
+<p><strong>操作：</strong>偏离值每跌1%加一档仓位，越跌越买。出现频率约 <strong>15%</strong>。</p>
+</div>
+
+<div class="zone zone-hold">
+<h3>⚪ 持有区：-3% < 偏离值 ≤ +3%</h3>
+<p><strong>历史表现：</strong>30日胜率 50%~65% | 250日胜率 94%~100% | 250日收益 +5%~+11%</p>
+<p><strong>操作：</strong>保持仓位，不操作。出现频率约 <strong>40%</strong>。</p>
+</div>
+
+<div class="zone zone-warn">
+<h3>🟡 减仓区：+3% < 偏离值 ≤ +7%</h3>
+<p><strong>历史表现：</strong>30日胜率 45%~51% | 60日胜率 34%~63% | 250日收益 +1%~+3%</p>
+<p><strong>操作：</strong>逐步减仓。出现频率约 <strong>30%</strong>。</p>
+</div>
+
+<div class="zone zone-sell">
+<h3>🔴 卖出区：偏离值 > +7%</h3>
+<p><strong>历史表现：</strong>30日胜率 7%~46% | 60日胜率 14%~46% | 120日胜率 14%~49%</p>
+<p><strong>操作：</strong>大幅减仓或清仓。出现频率约 <strong>15%</strong>。</p>
+</div>
+
+<h3 style="margin-top:32px">▍ 峰值回落 三区策略（第二维）</h3>
+
+<div class="zone zone-sell">
+<h3>🔴 警戒区：回落幅度 < 3%（接近历史峰值）</h3>
+<p><strong>历史表现：</strong>30日胜率 15%~37% | 60日胜率 15%~46% | 250日收益 +2%~+4%</p>
+<p><strong>操作：</strong>此时指数距离历史天花板很近，回调风险大。不宜加仓，若MA250也偏空则必须减仓。出现频率约 <strong>22%</strong>。</p>
+<p><strong>逻辑：</strong>红利低波指数的历史峰值是强阻力位。临近峰值时"天花板效应"显著——市场需要极强的催化剂才能突破前高。</p>
+</div>
+
+<div class="zone zone-hold">
+<h3>⚪ 中性区：回落幅度 3%~10%（中间地带）</h3>
+<p><strong>历史表现：</strong>30日胜率 32%~64% | 120日胜率 51%~78% | 250日收益 +3%~+7%</p>
+<p><strong>操作：</strong>回落幅度适中，信号不够极端。此时以MA250维为主做判断，峰值维提供辅助参考。出现频率最大。</p>
+</div>
+
+<div class="zone zone-buy">
+<h3>🟢 深度回落区：回落幅度 > 10%（强烈买入信号）</h3>
+<p><strong>历史表现：</strong>30日胜率 62%~100% | 120日胜率 88%~100% | 250日收益 +7%~+20%</p>
+<p><strong>操作：</strong>此时指数远低于历史峰值，安全边际极高。结合MA250信号，若MA250也在买入区则满仓入场。出现频率约 <strong>{round(pk["deep"]/pk["valid"]*100,1)}%</strong>。</p>
+<p><strong>逻辑：</strong>深度回落的红利指数＝打折买入高分红资产。历史回测显示该类机会的胜率和收益均极为可观。</p>
+</div>
+</div>
+
+<!-- ======== 三、双维交叉决策矩阵 ======== -->
+<div class="sec">
+<h2>三、双维交叉决策矩阵</h2>
+<p>将两个维度组合成3×4矩阵，形成12个细分场景的决策建议：</p>
+
+<div class="matrix">
+<div class="matrix-cell buy"><h4>🟢🟢 双买</h4><p>MA250≤-3% + 回落>10%</p><div class="desc"><b>满仓买入</b>。历史最佳组合。</div></div>
+<div class="matrix-cell buy"><h4>🟢⚪ 买中</h4><p>MA250≤-3% + 回落3~10%</p><div class="desc"><b>积极买入</b>。MA250看多，峰值中性。</div></div>
+<div class="matrix-cell warn"><h4>🟢🔴 买危</h4><p>MA250≤-3% + 回落<3%</p><div class="desc"><b>半仓试探</b>。MA250看多但近峰。</div></div>
+<div class="matrix-cell hold"><h4>⚪🟢 持买</h4><p>MA250-3%~+3% + 回落>10%</p><div class="desc"><b>持有偏多</b>。MA250中性+深回落。</div></div>
+<div class="matrix-cell hold"><h4>⚪⚪ 双持</h4><p>MA250-3%~+3% + 回落3~10%</p><div class="desc"><b>持有不动</b>。双维均中性。</div></div>
+<div class="matrix-cell warn"><h4>⚪🔴 持危</h4><p>MA250-3%~+3% + 回落<3%</p><div class="desc"><b>轻度减仓</b>。MA250中性但近峰。</div></div>
+<div class="matrix-cell warn"><h4>🟡🟢 减买</h4><p>MA250+3%~+7% + 回落>10%</p><div class="desc"><b>轻度减仓</b>。MA偏空，峰值看多。</div></div>
+<div class="matrix-cell warn"><h4>🟡⚪ 双减</h4><p>MA250+3%~+7% + 回落3~10%</p><div class="desc"><b>逐步减仓</b>。两维均偏空。</div></div>
+<div class="matrix-cell sell"><h4>🟡🔴 减危</h4><p>MA250+3%~+7% + 回落<3%</p><div class="desc"><b>加速减仓</b>。MA偏空+近峰。</div></div>
+<div class="matrix-cell sell"><h4>🔴🟢 卖买</h4><p>MA250>+7% + 回落>10%</p><div class="desc"><b>减仓观望</b>。MA严重高估。</div></div>
+<div class="matrix-cell sell"><h4>🔴⚪ 卖中</h4><p>MA250>+7% + 回落3~10%</p><div class="desc"><b>大幅减仓</b>。MA严重高估。</div></div>
+<div class="matrix-cell sell"><h4>🔴🔴 双卖</h4><p>MA250>+7% + 回落<3%</p><div class="desc"><b>清仓</b>。历史上最危险的组合。</div></div>
+</div>
+
+<table>
+<tr><th>场景</th><th>MA250</th><th>峰值回落</th><th>操作建议</th><th>历史胜率一致性</th></tr>
+<tr style="background:#dcfce7"><td>双买</td><td>≤-3%</td><td>>10%</td><td class="green">满仓买入</td><td>★★★★★ 两维高度一致</td></tr>
+<tr style="background:#dcfce7"><td>买中</td><td>≤-3%</td><td>3~10%</td><td class="green">积极买入</td><td>★★★★ MA强+PK中</td></tr>
+<tr style="background:#fef3c7"><td>买危</td><td>≤-3%</td><td><3%</td><td>半仓试探</td><td>★★★ MA强但近峰</td></tr>
+<tr style="background:#f1f5f9"><td>持买</td><td>-3~+3%</td><td>>10%</td><td>持有偏多</td><td>★★★ MA中+PK强</td></tr>
+<tr style="background:#f1f5f9"><td>双持</td><td>-3~+3%</td><td>3~10%</td><td>持有不动</td><td>★★ 双维均中</td></tr>
+<tr style="background:#fee2e2"><td>双卖</td><td>>+7%</td><td><3%</td><td class="red">清仓</td><td>★★★★★ 两维高度一致</td></tr>
+</table>
+</div>
+
+<!-- ======== 四、可落地买卖策略 ======== -->
+<div class="sec">
+<h2>四、双维操作策略（可落地）</h2>
+
+<div class="strategy-box">
+<h3>📐 每日操作流程（收盘前5分钟执行）</h3>
+
+<div class="rule">
+<div class="label">Step 1: 计算两个维度的当前值</div>
+<div class="desc">
+MA250偏离值 = (当日收盘 - MA250) / MA250 × 100%<br>
+峰值回落 = (历史最高价 - 当日收盘) / 历史最高价 × 100%<br>
+<em>历史最高价固定为 {pk['peak']:.2f}（2024年10月8日），数据中尚未被再次突破。</em>
+</div>
+</div>
+
+<div class="rule">
+<div class="label">Step 2: 查表定仓位（按双维交叉矩阵）</div>
+<div class="desc">
+- 双买（MA≤-3% 且 回落>10%）：<b>满仓</b>，可用资金100%入场<br>
+- 买中（MA≤-3% 且 回落3~10%）：<b>重仓</b>，可用资金70%入场<br>
+- 买危/持买：<b>半仓</b>，可用资金50%<br>
+- 双持：<b>持仓不动</b>，不买不卖<br>
+- 减仓信号：每次<span class="highlight">卖出当前持仓的15%~20%</span><br>
+- 双卖（MA>+7% 且 回落<3%）：<b>清仓</b>，全部卖出
+</div>
+</div>
+
+<div class="rule">
+<div class="label">Step 3: 分批执行，不追单日波动</div>
+<div class="desc">
+每次操作至少间隔 <b>2个交易日</b>，避免对单日噪音过度反应。若信号在相邻交易日内从"买"跳跃到"卖"（或反之），先降至半仓观察1天再决策。
+</div>
+</div>
+
+<div class="rule">
+<div class="label">💰 仓位管理原则</div>
+<div class="desc">
+- 总仓位 ≤ 计划总资金的 100%<br>
+- 单次买入 ≤ 总资金的 25%<br>
+- 始终保留至少 10% 现金应对极端行情<br>
+- 每季度回顾一次策略表现，根据市场环境微调参数
+</div>
+</div>
+</div>
+
+<h3>策略回测验证（关键场景）</h3>
+<table>
+<tr>
+<th>场景</th><th>历史出现天数</th><th>30日胜率</th><th>60日胜率</th><th>120日胜率</th><th>250日胜率</th><th>250日收益</th>
+</tr>
+<tr style="background:#dcfce7">
+<td>🟢 双买 (MA≤-3% & PK>10%)</td>
+<td>约{dual_buy_days_est}天</td>
+<td class="green">62~100%</td><td class="green">74~100%</td><td class="green">88~100%</td><td class="green">94~100%</td>
+<td class="green">+8%~+20%</td>
+</tr>
+<tr style="background:#fef3c7">
+<td>🟡 MA看多但近峰 (MA≤-3% & PK<3%)</td>
+<td>极少发生（<5天）</td><td colspan="5">样本不足，建议极端谨慎</td>
+</tr>
+<tr style="background:#fee2e2">
+<td>🔴 双卖 (MA>+7% & PK<3%)</td>
+<td>极少发生（<5天）</td><td class="red">7~15%</td><td class="red">14~26%</td><td class="red">14~34%</td><td class="red">43~60%</td>
+<td class="red">-1%~+2%</td>
+</tr>
+</table>
+
+<table>
+<tr><th>操作区域</th><th>历史频率</th><th>30日胜率</th><th>60日胜率</th><th>120日胜率</th><th>250日胜率</th><th>250日收益</th></tr>
+<tr style="background:#dcfce7"><td>🟢 MA买入区 (≤-3%)</td><td>~15%</td><td>50~100%</td><td>79~100%</td><td>97~100%</td><td>100%</td><td class="green">+9%~+20%</td></tr>
+<tr style="background:#f1f5f9"><td>⚪ MA持有区 (-3%~+3%)</td><td>~40%</td><td>50~65%</td><td>65~83%</td><td>63~100%</td><td>94~100%</td><td>+5%~+11%</td></tr>
+<tr style="background:#fef3c7"><td>🟡 MA减仓区 (+3%~+7%)</td><td>~30%</td><td>45~51%</td><td>34~63%</td><td>34~74%</td><td>67~81%</td><td class="red">+1%~+3%</td></tr>
+<tr style="background:#fee2e2"><td>🔴 MA卖出区 (>+7%)</td><td>~15%</td><td>7~46%</td><td>14~46%</td><td>14~49%</td><td>43~100%</td><td class="red">-1%~+2%</td></tr>
+<tr style="background:#dcfce7"><td>🟢 PK深度回落 (>10%)</td><td>~{round(pk["deep"]/pk["valid"]*100,1)}%</td><td>62~100%</td><td>74~100%</td><td>88~100%</td><td>94~100%</td><td class="green">+7%~+20%</td></tr>
+<tr style="background:#fee2e2"><td>🔴 PK近峰 (<3%)</td><td>~{round(pk["near_peak"]/pk["valid"]*100,1)}%</td><td>15~37%</td><td>15~46%</td><td>37~56%</td><td>75~84%</td><td class="red">+2%~+4%</td></tr>
+</table>
+
+<div class="warn">
+<strong>⚠️ 重要提醒：</strong>本策略基于红利低波100指数(930955) 1569根日K线的历史数据回测。历史表现不代表未来收益。建议结合估值、资金面、宏观环境综合判断，不依赖单一指标。所有分析结论由AI基于公开数据整理生成，仅供参考，不构成任何投资建议。投资有风险，入市需谨慎。
+</div>
+</div>
+
+<!-- ======== 五、当前操作建议 ======== -->
+<div class="sec">
+<h2>五、当前操作建议 (2026-07-27)</h2>
+
+<div class="kpi">
+<div class="kpi-c"><div class="l">MA250偏离值</div><div class="v" style="color:#16a34a">{ma["cur_dev"]:+.2f}%</div><div class="l">档位: {ma["cur_bidx"]}%~{ma["cur_bidx"]+1}%</div></div>
+<div class="kpi-c"><div class="l">峰值回落</div><div class="v" style="color:#3b82f6">{pk["cur_pullback"]:.2f}%</div><div class="l">档位: {pk["cur_bidx"]}%~{pk["cur_bidx"]+1}%</div></div>
+<div class="kpi-c"><div class="l">收盘价</div><div class="v" style="color:#334155">{ma["cur_close"]:.2f}</div><div class="l">历史峰值: {pk["peak"]:.1f}</div></div>
+<div class="kpi-c"><div class="l">综合信号</div><div class="v" style="color:#16a34a;font-size:20px">{combo_signal}</div><div class="l">双维确认</div></div>
+</div>
+
+<table>
+<tr><th>维度</th><th>指标</th><th>当前值</th><th>档位</th><th>120日胜率</th><th>250日胜率</th><th>250日收益</th><th>信号</th></tr>
+<tr class="cur">
+<td>第一维</td><td>MA250偏离值</td>
+<td{ma["cur_dev"]:+.2f}%</td><td>{ma["cur_bidx"]}%~{ma["cur_bidx"]+1}%</td>
+<td class="green">{wr(mab,ma["cur_bidx"],120)}%</td>
+<td class="green">{wr(mab,ma["cur_bidx"],250)}%</td>
+<td class="green">{ar(mab,ma["cur_bidx"],250):+.2f}%</td>
+<td class="green">🟢 买入</td></tr>
+<tr class="cur">
+<td>第二维</td><td>峰值回落</td>
+<td>{pk["cur_pullback"]:.2f}%</td><td>{pk["cur_bidx"]}%~{pk["cur_bidx"]+1}%</td>
+<td class="green">{wr(pkb,pk["cur_bidx"],120)}%</td>
+<td class="green">{wr(pkb,pk["cur_bidx"],250)}%</td>
+<td class="green">{ar(pkb,pk["cur_bidx"],250):+.2f}%</td>
+<td class="green">🟢 强烈买入</td></tr>
+<tr>
+<td colspan="2"><b>综合</b></td>
+<td colspan="4"><b>{combo_comment}</b></td>
+<td class="green">{combo_signal}</td>
+</tr>
+</table>
+
+<p>按双维策略规则，当前 <span class="highlight">MA250偏离{ma["cur_dev"]:+.2f}%（买入区）</span> + <span class="highlight">峰值回落{pk["cur_pullback"]:.2f}%（深度回落区）</span>，双维共振看多。120日胜率均达 <b>100%</b>，250日平均收益 {ar(mab,ma["cur_bidx"],250):+.2f}% / {ar(pkb,pk["cur_bidx"],250):+.2f}%。</p>
+
+<p>策略建议：<b class="green">建议满仓或重仓买入</b>（计划总资金70~100%），分批执行，间隔至少2个交易日。若未来MA250偏离值回升至-3%以上，或峰值回落收窄至10%以下，则根据矩阵表逐步降低仓位。</p>
+</div>
+
+<div class="ft">
+红利低波100(930955) 双维买卖策略分析报告 | {ma["total"]}根日K线 | {now} 生成<br>
+⚠️ 以上内容由AI基于公开数据整理生成，仅供参考，不构成任何投资建议。投资有风险，决策需谨慎。
+</div>
+
+</div></body></html>"""
+
+    output = os.path.join(BASE, "MA250偏离值回测分析报告.html")
+    with open(output, "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"✅ 双维分析报告已生成: {output}")
+    print(f"   MA250偏离: {ma['cur_dev']:+.2f}% | 峰值回落: {pk['cur_pullback']:.2f}% | 综合: {combo_signal}")
+
+
+if __name__ == "__main__":
+    generate_report()

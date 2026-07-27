@@ -1,0 +1,40 @@
+{
+  "strategy_params": {
+    "val_weight": 0.3,
+    "tech_weight": 0.7,
+    "buy_threshold": 55,
+    "sell_threshold": 45
+  },
+  "current_signals": {
+    "date": "2026-06-25",
+    "composite_score": 60.82667137079542,
+    "valuation_score": 61.588904569318075,
+    "technical_score": 60.5,
+    "position": 1,
+    "last_signal": 0
+  },
+  "performance_metrics": {
+    "total_return": 3.866918831509649,
+    "benchmark_return": -4.98241133022981,
+    "annual_return": 3.775314165549948,
+    "max_drawdown": 4.663982292704912,
+    "win_rate": 50.0,
+    "sharpe_ratio": 0.9770392743408954,
+    "num_trade_days": 44,
+    "trading_years": 1.0238095238095237
+  },
+  "valuation_factors": {
+    "pe_score": 71.3953488372093,
+    "pb_score": 71.3953488372093,
+    "dy_score": 83.65542635658916,
+    "price_score": 56.98094002284402
+  },
+  "technical_factors": {
+    "trend_score": 55,
+    "momentum_score": 60,
+    "volatility_score": 65,
+    "volume_score": 45,
+    "oscillator_score": 75,
+    "sr_score": 70
+  }
+}
