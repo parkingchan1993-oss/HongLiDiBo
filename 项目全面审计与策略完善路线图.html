@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>红利低波100策略项目全面审计与完善路线图</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ee;--red:#c62828;--redbg:#fff1f1;--green:#16845b;--greenbg:#edf9f4;--amber:#b26a00;--amberbg:#fff8e8;--blue:#1f5fae;--bluebg:#eef6ff;--purple:#6941c6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;line-height:1.7}.wrap{max-width:1160px;margin:0 auto;padding:28px 18px 56px}.hero{background:linear-gradient(135deg,#f7fbff,#eef4fb);border:1px solid #d7e2f0;border-radius:18px;padding:30px;margin-bottom:20px}.eyebrow{color:var(--blue);font-size:13px;font-weight:700;letter-spacing:.08em}.hero h1{margin:7px 0 8px;font-size:29px;line-height:1.35}.sub{color:var(--muted);font-size:14px}.verdict{margin-top:20px;padding:18px;border-left:5px solid var(--amber);background:var(--amberbg);border-radius:10px;font-weight:650}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}.kpi .v{font-size:25px;font-weight:800}.kpi .l{font-size:12px;color:var(--muted);margin-top:4px}.section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;margin:18px 0}.section h2{font-size:20px;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}.section h3{font-size:16px;margin:20px 0 8px}.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700}.p0{background:var(--redbg);color:var(--red)}.p1{background:var(--amberbg);color:var(--amber)}.p2{background:var(--bluebg);color:var(--blue)}.good{background:var(--greenbg);color:var(--green)}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#eff4f9;text-align:left;color:#334155}th,td{padding:10px 9px;border-bottom:1px solid var(--line);vertical-align:top}.mono{font-family:Consolas,monospace;font-size:12px}.callout{border-radius:10px;padding:14px 16px;margin:12px 0}.danger{background:var(--redbg);border:1px solid #f2caca}.info{background:var(--bluebg);border:1px solid #cfe1f6}.success{background:var(--greenbg);border:1px solid #ccebdc}.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:14px 0}.flow div{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;font-size:12px;font-weight:700}.arrow{color:var(--blue)}ol,ul{padding-left:22px}.road{display:grid;grid-template-columns:130px 1fr;gap:14px;border-bottom:1px solid var(--line);padding:15px 0}.road:last-child{border-bottom:0}.phase{font-weight:800;color:var(--blue)}.small{font-size:12px;color:var(--muted)}.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.flow{grid-template-columns:repeat(2,1fr)}.road{grid-template-columns:1fr}.hero h1{font-size:23px}}@media(max-width:520px){.grid{grid-template-columns:1fr}.section{padding:17px}}
+</style>
+</head>
+<body><main class="wrap">
+<section class="hero">
+<div class="eyebrow">930955 · PROJECT AUDIT</div>
+<h1>红利低波100策略项目全面审计与完善路线图</h1>
+<div class="sub">审计对象：数据获取、指标评分、四维信号、仓位回测、报告生成和自动更新链路｜数据快照：2020-02-10 至 2026-07-27，共 1569 根日K</div>
+<div class="verdict">核心判断：项目已具备良好的研究原型，但现有报告尚不能作为严格实盘证据。当前最优先工作不是继续增加因子，而是修复执行时序、历史估值点时数据、信号冲突、成本模型和样本独立性。</div>
+</section>
+<div class="grid">
+<div class="kpi"><div class="v">3代</div><div class="l">评分仪表盘 / MA250 / 四维策略</div></div>
+<div class="kpi"><div class="v">1569</div><div class="l">K线记录，排序与OHLC校验通过</div></div>
+<div class="kpi"><div class="v">15次</div><div class="l">MA≤-3%的真实入区事件，而非136次独立信号</div></div>
+<div class="kpi"><div class="v">4项P0</div><div class="l">需优先修复的可信度缺陷类别</div></div>
+</div>
+<section class="section">
+<h2>一、项目全景与当前版本判断</h2>
+<div class="flow"><div>TDX / AKShare / CSI</div><div>数据快照与对齐</div><div>技术/估值指标</div><div>信号与仓位</div><div>回测统计</div><div>HTML报告</div></div>
+<table><thead><tr><th>体系</th><th>主要文件</th><th>作用</th><th>审计结论</th></tr></thead><tbody>
+<tr><td>100分评分体系</td><td class="mono">dividend_strategy.py</td><td>估值60分 + 技术40分，生成实时仪表盘</td><td>展示完整，但历史估值回溯使用当前数据，且代理指标命名会误导</td></tr>
+<tr><td>MA250研究体系</td><td class="mono">backtest_strategy.py<br>analysis_v2.py</td><td>偏离分档、条件收益、仓位策略</td><td>MA250信号本身有研究价值，但回测执行时点错误，结果对成本非常敏感</td></tr>
+<tr><td>四维策略体系</td><td class="mono">four_dim_backtest.py<br>answer_three_questions.py</td><td>MA、周RSI、相对收益差、股债利差</td><td>最新探索版本；数据对齐和估值历史存在严重问题，当前报告不能直接用于仓位决策</td></tr>
+</tbody></table>
+<div class="info callout"><b>当前最可信的资产：</b><span class="mono">history_klines.json</span>。已核验1569行、日期严格递增、无重复、OHLC关系合法。最可信的研究结论是“MA250深度负偏离值得继续验证”，而不是现有HTML中的具体胜率或仓位建议。</div>
+</section>
+<section class="section">
+<h2>二、关键审计发现</h2>
+<table><thead><tr><th>优先级</th><th>问题</th><th>证据位置</th><th>影响</th></tr></thead><tbody>
+<tr><td><span class="pill p0">P0</span></td><td>用当日收盘产生仓位，再把新仓位用于当日收益</td><td class="mono">analysis_v2.py:65-82, 140-165</td><td>同周期未来函数，原策略收益与风险指标失真</td></tr>
+<tr><td><span class="pill p0">P0</span></td><td>股息率/国债缺失值可能匹配未来日期；二分查找写成 <span class="mono">hi=lo</span></td><td class="mono">four_dim_backtest.py:108-182<br>answer_three_questions.py:172-190</td><td>股债利差历史序列被污染</td></tr>
+<tr><td><span class="pill p0">P0</span></td><td>用当前 payout ratio 或当前股息率回填全历史</td><td class="mono">dividend_strategy.py:246-313<br>four_dim_backtest.py:143-159</td><td>历史估值前视偏差，四维回测无法证明有效</td></tr>
+<tr><td><span class="pill p0">P0</span></td><td>策略3 Sharpe分母引用策略1净值</td><td class="mono">analysis_v2.py:176</td><td>输出 Sharpe=56.272，无统计意义</td></tr>
+<tr><td><span class="pill p1">P1</span></td><td>每日滚动前瞻样本高度重叠</td><td class="mono">backtest_strategy.py<br>four_dim_backtest.py</td><td>“100%胜率、129个样本”被严重夸大</td></tr>
+<tr><td><span class="pill p1">P1</span></td><td>买卖冲突时买入优先；REDUCE与SELL计数口径不一致</td><td class="mono">four_dim_backtest.py:399-412<br>answer_three_questions.py:369-384</td><td>2买2卖或2买3卖会被错误归到偏多仓位</td></tr>
+<tr><td><span class="pill p1">P1</span></td><td>未纳入成本、分红再投、现金收益、ETF跟踪误差</td><td>所有主要回测</td><td>策略与Buy & Hold不是同一收益口径</td></tr>
+<tr><td><span class="pill p2">P2</span></td><td>价格分位标为PB，均线比标为ROE；MACD存在不可达分支</td><td class="mono">dividend_strategy.py:327-365, 128-135</td><td>解释性和评分可靠性下降</td></tr>
+<tr><td><span class="pill p2">P2</span></td><td>报告硬编码统计、阈值与代码不一致</td><td class="mono">generate_four_dim_report.py</td><td>报告无法从JSON完整复现</td></tr>
+</tbody></table>
+</section>
+<section class="section">
+<h2>三、独立复算：原结论为何需要重建</h2>
+<h3>1. “136个买入样本”实际只有少量独立事件</h3>
+<table><thead><tr><th>口径</th><th>数量</th><th>250日有效样本</th><th>解释</th></tr></thead><tbody>
+<tr><td>每日观察：MA250偏离≤-3%</td><td>136</td><td>104</td><td>连续日期重复计数，不能视作104笔独立交易</td></tr>
+<tr><td>首次进入区间事件</td><td>15</td><td>10</td><td>更接近真实交易信号，但仍有多个事件的持有期重叠</td></tr>
+<tr><td>250日非重叠抽样</td><td>4</td><td>3</td><td>独立性更强，但样本量小到无法支持确定性结论</td></tr>
+</tbody></table>
+<h3>2. 执行时点与成本敏感性</h3>
+<table><thead><tr><th>版本</th><th>总收益</th><th>Sharpe</th><th>最大回撤</th><th>说明</th></tr></thead><tbody>
+<tr><td>原代码：当日信号控制当日收益</td><td style="color:var(--red);font-weight:700">-17.95%</td><td>-0.429</td><td>-27.30%</td><td>未来函数，但在本样本中反而压低了收益</td></tr>
+<tr><td>校正：T日信号，T+1日执行，无成本</td><td style="color:var(--green);font-weight:700">+48.14%</td><td>0.945</td><td>-9.22%</td><td>累计平均仓位约38.5%，累计换手约45.75倍</td></tr>
+<tr><td>校正 + 单边10bp成本</td><td>+41.52%</td><td>0.839</td><td>-9.40%</td><td>仍略高于同期价格Buy & Hold</td></tr>
+<tr><td>校正 + 单边20bp成本</td><td>+35.19%</td><td>0.732</td><td>-9.58%</td><td>已低于价格Buy & Hold的+37.72%</td></tr>
+<tr><td>价格Buy & Hold</td><td>+37.72%</td><td>0.411</td><td>-17.72%</td><td>尚未统一加入分红再投口径</td></tr>
+</tbody></table>
+<div class="success callout"><b>正确解读：</b>MA250仓位控制可能具有明显的回撤管理价值，但超额收益是否存在尚未证实。结果对成交时点和单位换手成本高度敏感，必须在统一总收益口径和真实ETF成本下重新验证。</div>
+</section>
+<section class="section">
+<h2>四、策略结构应如何重构</h2>
+<h3>建议从“四维投票”改为“三层决策”</h3>
+<table><thead><tr><th>层级</th><th>建议因子</th><th>职责</th><th>原则</th></tr></thead><tbody>
+<tr><td><b>估值层</b></td><td>历史D/P2、PE/PB分位、股息率－CN10Y</td><td>决定长期仓位中枢</td><td>必须使用当日可获得的点时数据；不再用价格分位冒充PB</td></tr>
+<tr><td><b>趋势/风险层</b></td><td>MA250偏离、MA250斜率、波动率</td><td>决定加减仓节奏和风险预算</td><td>MA与RSI高相关，不再一票一票重复计权</td></tr>
+<tr><td><b>风格层</b></td><td>相对中证全指的收益差</td><td>衡量红利风格冷热</td><td>先验证趋势延续还是均值回归，不预设方向</td></tr>
+<tr><td><b>执行层</b></td><td>次日成交、调仓带、成本、现金收益</td><td>把研究信号变成可交易规则</td><td>所有信号只影响下一交易日；冲突时以净分值或风险优先</td></tr>
+</tbody></table>
+<div class="danger callout"><b>不建议继续使用：</b>“四个因子各一票，按买入票数直接映射50%~100%仓位”。MA250与周RSI相关系数约0.77，重复计票会虚构共振；同时现有逻辑在买卖冲突时偏向买入。</div>
+</section>
+<section class="section">
+<h2>五、执行路线图</h2>
+<div class="road"><div class="phase">阶段A<br>可信回测内核</div><div><b>先完成。</b>统一时间轴与as-of规则；信号滞后一日；只向后填充历史已知数据；加入交易成本、现金收益、总收益基准；输出逐笔调仓日志和数据来源时间戳。验收标准：任意报告指标都能从交易日志和数据快照复算。</div></div>
+<div class="road"><div class="phase">阶段B<br>数据层重建</div><div>把930955、000985、CN10Y、D/P2、PE/PB保存为工作区内版本化快照，不再扫描外部临时tool-results。建立数据质量检查：重复日期、缺失、未来匹配、截面日期错配、字段单位。</div></div>
+<div class="road"><div class="phase">阶段C<br>稳健性验证</div><div>将每日观察改为信号事件；报告非重叠样本和block bootstrap置信区间；做年度/牛熊/利率状态切片；执行walk-forward或expanding-window；参数仅在训练窗选择，在后续窗口验证。</div></div>
+<div class="road"><div class="phase">阶段D<br>策略简化</div><div>先以“估值中枢 + MA250风险层 + 风格温度”三层模型为基准；与固定50%、60/40仓位、Buy & Hold和定期再平衡进行同口径对照。只有新增因子带来稳定样本外增益才保留。</div></div>
+<div class="road"><div class="phase">阶段E<br>报告与更新</div><div>HTML只读取统一结果JSON，不硬编码胜率和阈值；报告中区分观察数、事件数和独立样本数；自动更新流程同时写入数据快照日期、脚本版本和运行状态。</div></div>
+</section>
+<section class="section">
+<h2>六、建议立即执行的首个迭代</h2>
+<ol>
+<li>新建统一回测内核，先迁移MA250策略，不继续修补旧脚本的顶层过程代码。</li>
+<li>实现 <span class="mono">signal_date → execution_date → holding_return</span> 三个时间字段，明确T+1执行。</li>
+<li>加入0/10/20bp成本情景、现金利率情景和分红/总收益基准。</li>
+<li>输出逐日净值、目标仓位、实际仓位、换手、成本和交易原因。</li>
+<li>先完成MA250参数网格的walk-forward稳定性，再接入周RSI与相对收益差。</li>
+<li>暂停使用历史股债利差信号，直到获得可靠的历史D/P2点时数据。</li>
+</ol>
+<p class="small">本报告基于当前工作区代码、JSON和HTML的静态审阅，以及对history_klines.json的独立复算。未调用实时行情；当前估值与行情快照存在日期滞后，不给出即时买卖建议。</p>
+</section>
+<div class="footer">红利低波100策略项目审计｜生成日期：2026-07-31｜仅用于策略研究与工程改进，不构成投资建议</div>
+</main></body></html>

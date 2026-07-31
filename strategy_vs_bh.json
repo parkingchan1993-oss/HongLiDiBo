@@ -1,0 +1,21 @@
+{
+  "strategy_metrics": {
+    "total_ret": 20.6,
+    "ann_ret": 3.64,
+    "max_dd": -11.01,
+    "sharpe": 0.468,
+    "calmar": 0.33
+  },
+  "bh_metrics": {
+    "total_ret": 26.8,
+    "ann_ret": 4.64,
+    "max_dd": -17.72,
+    "sharpe": 0.378,
+    "calmar": 0.26
+  },
+  "trades": 158,
+  "avg_position": 51.4,
+  "start_date": "20210218",
+  "total_days": 1319,
+  "excess_return": -6.2
+}

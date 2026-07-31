@@ -1,0 +1,939 @@
+{
+  "meta": {
+    "klines_930": 1569,
+    "date_range": "20200210~20260727",
+    "benchmark": "000985 1400根 20201023~20260730",
+    "cn10y_days": 6137,
+    "div_yield_days": 1593,
+    "valid_4d_days": 1320,
+    "payout_ratio": 0.407592
+  },
+  "correlations": {
+    "MA250偏离 vs 周RSI": 0.7712,
+    "MA250偏离 vs 股债利差": -0.3483,
+    "周RSI vs 股债利差": -0.2552,
+    "40日收益差 vs MA250偏离": 0.2706,
+    "40日收益差 vs 周RSI": 0.2051,
+    "40日收益差 vs 股债利差": 0.0857
+  },
+  "spread_backtest": [
+    {
+      "bucket": -10,
+      "count": 4,
+      "stats": {
+        "30": {
+          "valid": 4,
+          "win_rate": 100.0,
+          "avg_return": 2.66,
+          "worst": 0.18
+        },
+        "60": {
+          "valid": 4,
+          "win_rate": 25.0,
+          "avg_return": -1.38,
+          "worst": -2.35
+        },
+        "120": {
+          "valid": 4,
+          "win_rate": 100.0,
+          "avg_return": 1.07,
+          "worst": 0.16
+        },
+        "250": {
+          "valid": 4,
+          "win_rate": 100.0,
+          "avg_return": 5.44,
+          "worst": 2.84
+        }
+      },
+      "count_pct": 0.3
+    },
+    {
+      "bucket": -9,
+      "count": 8,
+      "stats": {
+        "30": {
+          "valid": 8,
+          "win_rate": 62.5,
+          "avg_return": 1.04,
+          "worst": -5.69
+        },
+        "60": {
+          "valid": 8,
+          "win_rate": 12.5,
+          "avg_return": -2.68,
+          "worst": -7.31
+        },
+        "120": {
+          "valid": 8,
+          "win_rate": 50.0,
+          "avg_return": -0.23,
+          "worst": -3.86
+        },
+        "250": {
+          "valid": 8,
+          "win_rate": 100.0,
+          "avg_return": 6.86,
+          "worst": 4.21
+        }
+      },
+      "count_pct": 0.6
+    },
+    {
+      "bucket": -8,
+      "count": 24,
+      "stats": {
+        "30": {
+          "valid": 22,
+          "win_rate": 40.9,
+          "avg_return": -1.19,
+          "worst": -6.81
+        },
+        "60": {
+          "valid": 20,
+          "win_rate": 30.0,
+          "avg_return": -3.16,
+          "worst": -7.97
+        },
+        "120": {
+          "valid": 20,
+          "win_rate": 40.0,
+          "avg_return": -1.4,
+          "worst": -4.94
+        },
+        "250": {
+          "valid": 15,
+          "win_rate": 100.0,
+          "avg_return": 7.05,
+          "worst": 2.59
+        }
+      },
+      "count_pct": 1.8
+    },
+    {
+      "bucket": -7,
+      "count": 51,
+      "stats": {
+        "30": {
+          "valid": 46,
+          "win_rate": 78.3,
+          "avg_return": 2.22,
+          "worst": -6.28
+        },
+        "60": {
+          "valid": 43,
+          "win_rate": 58.1,
+          "avg_return": 0.48,
+          "worst": -6.09
+        },
+        "120": {
+          "valid": 41,
+          "win_rate": 75.6,
+          "avg_return": 1.02,
+          "worst": -3.99
+        },
+        "250": {
+          "valid": 19,
+          "win_rate": 94.7,
+          "avg_return": 8.89,
+          "worst": -0.96
+        }
+      },
+      "count_pct": 3.8
+    },
+    {
+      "bucket": -6,
+      "count": 49,
+      "stats": {
+        "30": {
+          "valid": 48,
+          "win_rate": 58.3,
+          "avg_return": 0.6,
+          "worst": -10.07
+        },
+        "60": {
+          "valid": 42,
+          "win_rate": 57.1,
+          "avg_return": 0.88,
+          "worst": -5.56
+        },
+        "120": {
+          "valid": 38,
+          "win_rate": 65.8,
+          "avg_return": 0.97,
+          "worst": -6.8
+        },
+        "250": {
+          "valid": 20,
+          "win_rate": 100.0,
+          "avg_return": 11.32,
+          "worst": 2.49
+        }
+      },
+      "count_pct": 3.6
+    },
+    {
+      "bucket": -5,
+      "count": 63,
+      "stats": {
+        "30": {
+          "valid": 61,
+          "win_rate": 59.0,
+          "avg_return": 1.99,
+          "worst": -10.65
+        },
+        "60": {
+          "valid": 55,
+          "win_rate": 72.7,
+          "avg_return": 3.32,
+          "worst": -7.3
+        },
+        "120": {
+          "valid": 51,
+          "win_rate": 78.4,
+          "avg_return": 3.76,
+          "worst": -7.93
+        },
+        "250": {
+          "valid": 43,
+          "win_rate": 100.0,
+          "avg_return": 10.04,
+          "worst": 2.78
+        }
+      },
+      "count_pct": 4.6
+    },
+    {
+      "bucket": -4,
+      "count": 94,
+      "stats": {
+        "30": {
+          "valid": 90,
+          "win_rate": 52.2,
+          "avg_return": 1.14,
+          "worst": -9.18
+        },
+        "60": {
+          "valid": 84,
+          "win_rate": 63.1,
+          "avg_return": 1.97,
+          "worst": -5.65
+        },
+        "120": {
+          "valid": 76,
+          "win_rate": 76.3,
+          "avg_return": 4.39,
+          "worst": -7.32
+        },
+        "250": {
+          "valid": 62,
+          "win_rate": 93.5,
+          "avg_return": 7.49,
+          "worst": -5.7
+        }
+      },
+      "count_pct": 6.9
+    },
+    {
+      "bucket": -3,
+      "count": 112,
+      "stats": {
+        "30": {
+          "valid": 111,
+          "win_rate": 58.6,
+          "avg_return": 0.51,
+          "worst": -8.36
+        },
+        "60": {
+          "valid": 109,
+          "win_rate": 56.9,
+          "avg_return": 1.06,
+          "worst": -10.2
+        },
+        "120": {
+          "valid": 107,
+          "win_rate": 58.9,
+          "avg_return": 3.03,
+          "worst": -7.76
+        },
+        "250": {
+          "valid": 90,
+          "win_rate": 87.8,
+          "avg_return": 4.85,
+          "worst": -6.5
+        }
+      },
+      "count_pct": 8.3
+    },
+    {
+      "bucket": -2,
+      "count": 101,
+      "stats": {
+        "30": {
+          "valid": 98,
+          "win_rate": 61.2,
+          "avg_return": 1.29,
+          "worst": -8.61
+        },
+        "60": {
+          "valid": 93,
+          "win_rate": 62.4,
+          "avg_return": 1.88,
+          "worst": -10.96
+        },
+        "120": {
+          "valid": 88,
+          "win_rate": 69.3,
+          "avg_return": 3.98,
+          "worst": -12.05
+        },
+        "250": {
+          "valid": 80,
+          "win_rate": 76.2,
+          "avg_return": 3.98,
+          "worst": -8.95
+        }
+      },
+      "count_pct": 7.4
+    },
+    {
+      "bucket": -1,
+      "count": 147,
+      "stats": {
+        "30": {
+          "valid": 146,
+          "win_rate": 55.5,
+          "avg_return": 1.79,
+          "worst": -8.48
+        },
+        "60": {
+          "valid": 146,
+          "win_rate": 62.3,
+          "avg_return": 2.6,
+          "worst": -8.86
+        },
+        "120": {
+          "valid": 137,
+          "win_rate": 64.2,
+          "avg_return": 3.72,
+          "worst": -11.82
+        },
+        "250": {
+          "valid": 122,
+          "win_rate": 86.1,
+          "avg_return": 6.93,
+          "worst": -7.66
+        }
+      },
+      "count_pct": 10.8
+    },
+    {
+      "bucket": 0,
+      "count": 156,
+      "stats": {
+        "30": {
+          "valid": 154,
+          "win_rate": 47.4,
+          "avg_return": 0.18,
+          "worst": -8.16
+        },
+        "60": {
+          "valid": 154,
+          "win_rate": 68.8,
+          "avg_return": 2.35,
+          "worst": -9.4
+        },
+        "120": {
+          "valid": 146,
+          "win_rate": 74.0,
+          "avg_return": 4.64,
+          "worst": -10.36
+        },
+        "250": {
+          "valid": 137,
+          "win_rate": 86.9,
+          "avg_return": 7.16,
+          "worst": -8.5
+        }
+      },
+      "count_pct": 11.5
+    },
+    {
+      "bucket": 1,
+      "count": 121,
+      "stats": {
+        "30": {
+          "valid": 120,
+          "win_rate": 50.8,
+          "avg_return": 0.57,
+          "worst": -7.93
+        },
+        "60": {
+          "valid": 120,
+          "win_rate": 64.2,
+          "avg_return": 2.29,
+          "worst": -9.83
+        },
+        "120": {
+          "valid": 117,
+          "win_rate": 80.3,
+          "avg_return": 4.6,
+          "worst": -8.85
+        },
+        "250": {
+          "valid": 112,
+          "win_rate": 80.4,
+          "avg_return": 5.72,
+          "worst": -8.07
+        }
+      },
+      "count_pct": 8.9
+    },
+    {
+      "bucket": 2,
+      "count": 117,
+      "stats": {
+        "30": {
+          "valid": 115,
+          "win_rate": 42.6,
+          "avg_return": -0.39,
+          "worst": -9.03
+        },
+        "60": {
+          "valid": 115,
+          "win_rate": 57.4,
+          "avg_return": 0.33,
+          "worst": -10.71
+        },
+        "120": {
+          "valid": 114,
+          "win_rate": 69.3,
+          "avg_return": 3.08,
+          "worst": -8.65
+        },
+        "250": {
+          "valid": 108,
+          "win_rate": 74.1,
+          "avg_return": 3.5,
+          "worst": -12.95
+        }
+      },
+      "count_pct": 8.6
+    },
+    {
+      "bucket": 3,
+      "count": 118,
+      "stats": {
+        "30": {
+          "valid": 117,
+          "win_rate": 51.3,
+          "avg_return": 0.91,
+          "worst": -9.52
+        },
+        "60": {
+          "valid": 117,
+          "win_rate": 55.6,
+          "avg_return": 0.62,
+          "worst": -11.71
+        },
+        "120": {
+          "valid": 111,
+          "win_rate": 50.5,
+          "avg_return": 1.47,
+          "worst": -7.87
+        },
+        "250": {
+          "valid": 108,
+          "win_rate": 82.4,
+          "avg_return": 4.16,
+          "worst": -10.36
+        }
+      },
+      "count_pct": 8.7
+    },
+    {
+      "bucket": 4,
+      "count": 66,
+      "stats": {
+        "30": {
+          "valid": 63,
+          "win_rate": 44.4,
+          "avg_return": -0.19,
+          "worst": -8.6
+        },
+        "60": {
+          "valid": 63,
+          "win_rate": 44.4,
+          "avg_return": -0.18,
+          "worst": -12.26
+        },
+        "120": {
+          "valid": 55,
+          "win_rate": 40.0,
+          "avg_return": 0.03,
+          "worst": -7.37
+        },
+        "250": {
+          "valid": 55,
+          "win_rate": 72.7,
+          "avg_return": 2.41,
+          "worst": -9.5
+        }
+      },
+      "count_pct": 4.9
+    },
+    {
+      "bucket": 5,
+      "count": 51,
+      "stats": {
+        "30": {
+          "valid": 49,
+          "win_rate": 34.7,
+          "avg_return": -1.58,
+          "worst": -8.61
+        },
+        "60": {
+          "valid": 49,
+          "win_rate": 46.9,
+          "avg_return": 0.12,
+          "worst": -7.25
+        },
+        "120": {
+          "valid": 49,
+          "win_rate": 20.4,
+          "avg_return": -3.85,
+          "worst": -12.9
+        },
+        "250": {
+          "valid": 49,
+          "win_rate": 71.4,
+          "avg_return": 2.51,
+          "worst": -4.62
+        }
+      },
+      "count_pct": 3.8
+    },
+    {
+      "bucket": 6,
+      "count": 46,
+      "stats": {
+        "30": {
+          "valid": 46,
+          "win_rate": 32.6,
+          "avg_return": -1.45,
+          "worst": -8.42
+        },
+        "60": {
+          "valid": 46,
+          "win_rate": 30.4,
+          "avg_return": -1.29,
+          "worst": -8.29
+        },
+        "120": {
+          "valid": 46,
+          "win_rate": 23.9,
+          "avg_return": -4.44,
+          "worst": -14.04
+        },
+        "250": {
+          "valid": 46,
+          "win_rate": 73.9,
+          "avg_return": 4.54,
+          "worst": -4.32
+        }
+      },
+      "count_pct": 3.4
+    },
+    {
+      "bucket": 7,
+      "count": 15,
+      "stats": {
+        "30": {
+          "valid": 15,
+          "win_rate": 66.7,
+          "avg_return": 0.49,
+          "worst": -3.06
+        },
+        "60": {
+          "valid": 15,
+          "win_rate": 20.0,
+          "avg_return": -1.27,
+          "worst": -4.69
+        },
+        "120": {
+          "valid": 15,
+          "win_rate": 33.3,
+          "avg_return": -3.97,
+          "worst": -9.64
+        },
+        "250": {
+          "valid": 15,
+          "win_rate": 86.7,
+          "avg_return": 6.76,
+          "worst": -1.38
+        }
+      },
+      "count_pct": 1.1
+    },
+    {
+      "bucket": 8,
+      "count": 13,
+      "stats": {
+        "30": {
+          "valid": 13,
+          "win_rate": 46.2,
+          "avg_return": 0.34,
+          "worst": -1.83
+        },
+        "60": {
+          "valid": 13,
+          "win_rate": 23.1,
+          "avg_return": -1.41,
+          "worst": -4.16
+        },
+        "120": {
+          "valid": 13,
+          "win_rate": 53.8,
+          "avg_return": -0.5,
+          "worst": -5.77
+        },
+        "250": {
+          "valid": 13,
+          "win_rate": 100.0,
+          "avg_return": 8.14,
+          "worst": 0.41
+        }
+      },
+      "count_pct": 1.0
+    },
+    {
+      "bucket": 9,
+      "count": 1,
+      "stats": {
+        "30": {
+          "valid": 1,
+          "win_rate": 100.0,
+          "avg_return": 0.31,
+          "worst": 0.31
+        },
+        "60": {
+          "valid": 1,
+          "win_rate": 0.0,
+          "avg_return": -3.21,
+          "worst": -3.21
+        },
+        "120": {
+          "valid": 1,
+          "win_rate": 0.0,
+          "avg_return": -0.99,
+          "worst": -0.99
+        },
+        "250": {
+          "valid": 1,
+          "win_rate": 100.0,
+          "avg_return": 1.38,
+          "worst": 1.38
+        }
+      },
+      "count_pct": 0.1
+    }
+  ],
+  "erp_backtest": [
+    {
+      "bucket": 3,
+      "count": 100,
+      "stats": {
+        "30": {
+          "valid": 100,
+          "win_rate": 51.0,
+          "avg_return": 1.42,
+          "worst": -5.9
+        },
+        "60": {
+          "valid": 100,
+          "win_rate": 62.0,
+          "avg_return": 2.4,
+          "worst": -8.12
+        },
+        "120": {
+          "valid": 100,
+          "win_rate": 77.0,
+          "avg_return": 2.64,
+          "worst": -6.43
+        },
+        "250": {
+          "valid": 100,
+          "win_rate": 95.0,
+          "avg_return": 8.22,
+          "worst": -2.73
+        }
+      },
+      "count_pct": 6.4
+    },
+    {
+      "bucket": 4,
+      "count": 146,
+      "stats": {
+        "30": {
+          "valid": 146,
+          "win_rate": 45.9,
+          "avg_return": -0.1,
+          "worst": -7.08
+        },
+        "60": {
+          "valid": 146,
+          "win_rate": 54.1,
+          "avg_return": 0.44,
+          "worst": -8.35
+        },
+        "120": {
+          "valid": 146,
+          "win_rate": 58.9,
+          "avg_return": 2.68,
+          "worst": -7.93
+        },
+        "250": {
+          "valid": 117,
+          "win_rate": 93.2,
+          "avg_return": 7.54,
+          "worst": -3.03
+        }
+      },
+      "count_pct": 9.3
+    },
+    {
+      "bucket": 5,
+      "count": 252,
+      "stats": {
+        "30": {
+          "valid": 247,
+          "win_rate": 41.3,
+          "avg_return": -0.32,
+          "worst": -10.65
+        },
+        "60": {
+          "valid": 221,
+          "win_rate": 46.6,
+          "avg_return": -0.13,
+          "worst": -12.26
+        },
+        "120": {
+          "valid": 161,
+          "win_rate": 54.0,
+          "avg_return": 2.15,
+          "worst": -11.42
+        },
+        "250": {
+          "valid": 102,
+          "win_rate": 98.0,
+          "avg_return": 10.77,
+          "worst": -0.81
+        }
+      },
+      "count_pct": 16.1
+    },
+    {
+      "bucket": 6,
+      "count": 257,
+      "stats": {
+        "30": {
+          "valid": 232,
+          "win_rate": 54.3,
+          "avg_return": -0.03,
+          "worst": -8.61
+        },
+        "60": {
+          "valid": 228,
+          "win_rate": 62.7,
+          "avg_return": 1.76,
+          "worst": -6.62
+        },
+        "120": {
+          "valid": 228,
+          "win_rate": 63.2,
+          "avg_return": 2.04,
+          "worst": -8.52
+        },
+        "250": {
+          "valid": 186,
+          "win_rate": 71.5,
+          "avg_return": 4.48,
+          "worst": -8.07
+        }
+      },
+      "count_pct": 16.4
+    },
+    {
+      "bucket": 7,
+      "count": 546,
+      "stats": {
+        "30": {
+          "valid": 546,
+          "win_rate": 52.6,
+          "avg_return": 0.71,
+          "worst": -9.52
+        },
+        "60": {
+          "valid": 546,
+          "win_rate": 59.3,
+          "avg_return": 1.39,
+          "worst": -10.96
+        },
+        "120": {
+          "valid": 546,
+          "win_rate": 67.8,
+          "avg_return": 2.87,
+          "worst": -14.04
+        },
+        "250": {
+          "valid": 546,
+          "win_rate": 81.0,
+          "avg_return": 4.23,
+          "worst": -12.95
+        }
+      },
+      "count_pct": 34.8
+    },
+    {
+      "bucket": 8,
+      "count": 211,
+      "stats": {
+        "30": {
+          "valid": 211,
+          "win_rate": 65.4,
+          "avg_return": 2.36,
+          "worst": -7.33
+        },
+        "60": {
+          "valid": 211,
+          "win_rate": 62.6,
+          "avg_return": 2.76,
+          "worst": -7.8
+        },
+        "120": {
+          "valid": 211,
+          "win_rate": 65.4,
+          "avg_return": 3.06,
+          "worst": -12.05
+        },
+        "250": {
+          "valid": 211,
+          "win_rate": 89.1,
+          "avg_return": 7.75,
+          "worst": -3.96
+        }
+      },
+      "count_pct": 13.4
+    },
+    {
+      "bucket": 9,
+      "count": 56,
+      "stats": {
+        "30": {
+          "valid": 56,
+          "win_rate": 60.7,
+          "avg_return": 1.34,
+          "worst": -9.03
+        },
+        "60": {
+          "valid": 56,
+          "win_rate": 75.0,
+          "avg_return": 3.52,
+          "worst": -2.92
+        },
+        "120": {
+          "valid": 56,
+          "win_rate": 100.0,
+          "avg_return": 12.88,
+          "worst": 4.37
+        },
+        "250": {
+          "valid": 56,
+          "win_rate": 100.0,
+          "avg_return": 14.09,
+          "worst": 10.25
+        }
+      },
+      "count_pct": 3.6
+    },
+    {
+      "bucket": 10,
+      "count": 1,
+      "stats": {
+        "30": {
+          "valid": 1,
+          "win_rate": 100.0,
+          "avg_return": 10.39,
+          "worst": 10.39
+        },
+        "60": {
+          "valid": 1,
+          "win_rate": 100.0,
+          "avg_return": 11.98,
+          "worst": 11.98
+        },
+        "120": {
+          "valid": 1,
+          "win_rate": 100.0,
+          "avg_return": 22.26,
+          "worst": 22.26
+        },
+        "250": {
+          "valid": 1,
+          "win_rate": 100.0,
+          "avg_return": 17.59,
+          "worst": 17.59
+        }
+      },
+      "count_pct": 0.1
+    }
+  ],
+  "combo_results": {
+    "4维2买": {
+      "count": 189,
+      "win_rate": 96.3,
+      "avg_return": 7.26,
+      "worst": -5.93
+    },
+    "4维2卖": {
+      "count": 214,
+      "win_rate": 69.2,
+      "avg_return": 1.59,
+      "worst": -12.95
+    },
+    "4维3买": {
+      "count": 115,
+      "win_rate": 100.0,
+      "avg_return": 13.6,
+      "worst": 1.74
+    },
+    "4维3卖": {
+      "count": 7,
+      "win_rate": 71.4,
+      "avg_return": 0.73,
+      "worst": -0.81
+    },
+    "4维4买": {
+      "count": 14,
+      "win_rate": 100.0,
+      "avg_return": 13.09,
+      "worst": 8.15
+    },
+    "4维中性": {
+      "count": 531,
+      "win_rate": 79.8,
+      "avg_return": 4.02,
+      "worst": -10.49
+    }
+  },
+  "current": {
+    "date": "20260727",
+    "close": 11383.12793,
+    "ma250_dev": -3.89,
+    "rsi": 37.6,
+    "spread_40d": 5.64,
+    "erp": 2.98,
+    "div_yield": 4.71,
+    "cn10y": 1.73
+  }
+}
